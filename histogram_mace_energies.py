@@ -2,6 +2,7 @@ import argparse
 import pandas as pd
 import numpy as np
 import sys
+import pickle as pkl
 
 import matplotlib.pyplot as plt
 
@@ -21,6 +22,7 @@ def parse():
     parser.add_argument("-n","--nframes", help="Number of frames to run", type=int, default=None)
     parser.add_argument("-m","--model", help="MACE model file", required=True)
     parser.add_argument("-e","--elements", required=True, type=str, nargs="+", help="Element (s) to print histogram for")
+    parser.add_argument("-c","--cell", type=float,nargs=3,help="Cell dimensions", default=None)
     parser.add_argument("-d","--device", type=str, help="Device to run on", default="cuda")
     return parser.parse_args()
 
@@ -49,8 +51,13 @@ if __name__=="__main__":
     xyz=read(args.input,":")
     if args.nframes is None:
         args.nframes=len(xyz)
+    if args.cell is not None:
+        for frame in xyz:
+            frame.set_cell(args.cell)
+            frame.pbc=True
     
     node_energies_df=get_node_energies(xyz,calculator,args.nframes)
+    pkl.dump(node_energies_df,open("node_energies_df.pkl","wb"))
     
     for element in args.elements:
         element_df=node_energies_df[node_energies_df["element"]==element]
